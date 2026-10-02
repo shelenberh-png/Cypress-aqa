@@ -15,7 +15,12 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+  "cy:open:qauto1": "cypress open --config-file cypress.config.js",
+  "cy:open:qauto2": "cypress open --config-file cypress.qauto2.config.js",
+  "cy:run:qauto1": "cypress run --config-file cypress.config.js",
+  "cy:run:qauto2": "cypress run --config-file cypress.qauto2.config.js",
+  "cy:run:all": "npm run cy:run:qauto1 && npm run cy:run:qauto2"
   },
   "dependencies": {
     "ansi-escapes": "^7.3.0",
@@ -170,6 +175,9 @@
     "yauzl": "^3.4.0"
   },
   "devDependencies": {
-    "cypress": "^16.1.1"
+    "cypress": "^16.1.1",
+    "mochawesome": "^8.1.1",
+    "mochawesome-merge": "^5.1.1",
+    "mochawesome-report-generator": "^6.3.2"
   }
 }
