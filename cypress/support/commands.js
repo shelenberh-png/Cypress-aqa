@@ -1,25 +1,23 @@
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+// Публічні креденшали basic auth з завдання (guest / welcome2qauto)
+const BASIC_AUTH = { user: 'guest', pass: 'welcome2qauto' };
+
+// GET /api/cars: список машин поточного користувача
+Cypress.Commands.add('getCarsApi', () => {
+  return cy.request({
+    method: 'GET',
+    url: '/api/cars',
+    auth: BASIC_AUTH,
+    failOnStatusCode: false,
+  });
+});
+
+// POST /api/expenses: створює витрату, повертає повний response
+Cypress.Commands.add('createExpenseApi', ({ carId, reportedAt, mileage, liters, totalCost }) => {
+  return cy.request({
+    method: 'POST',
+    url: '/api/expenses',
+    auth: BASIC_AUTH,
+    body: { carId, reportedAt, mileage, liters, totalCost },
+    failOnStatusCode: false,
+  });
+});
