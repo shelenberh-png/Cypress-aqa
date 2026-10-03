@@ -23,15 +23,19 @@ class GaragePage {
     return cy.contains('.car_name', name);
   }
 
-  // Повертає Cypress-chain з назвою створеного авто, напр. "BMW X5"
+  // Створює випадкове авто через UI, перехоплює POST /api/cars,
+  // валідує статус і повертає дані створеного авто (включно з id)
   addRandomCar(mileage) {
+    // Інтерсепт ставимо ДО кліку на Add
+    cy.intercept('POST', '**/api/cars').as('createCar');
+
     this.addCarButton.click();
     this.brandSelect.should('be.visible');
 
     let brandText;
     let modelText;
 
-    // 1. Запам'ятовуємо стан ДО зміни бренду
+    // 1. Бренд, відмінний від поточного
     this.modelSelect.find('option').first().invoke('text').then((staleModel) => {
       this.brandSelect.find('option:selected').invoke('text').then((currentBrand) => {
         this.brandSelect.find('option').then(($options) => {
@@ -44,7 +48,7 @@ class GaragePage {
         });
       });
 
-      // 2. Чекаємо, поки список моделей оновиться під новий бренд
+      // 2. Чекаємо, поки моделі оновляться під новий бренд
       this.modelSelect
         .find('option')
         .first()
@@ -53,7 +57,7 @@ class GaragePage {
         });
     });
 
-    // 3. Обираємо випадкову модель за текстом
+    // 3. Випадкова модель
     this.modelSelect.find('option').then(($options) => {
       const models = [...$options].map((o) => o.textContent.trim()).filter(Boolean);
       modelText = models[Math.floor(Math.random() * models.length)];
@@ -61,16 +65,34 @@ class GaragePage {
     });
 
     // 4. Пробіг і сабміт
-    this.mileageInput.clear().type(mileage);
+    this.mileageInput.clear().type(String(mileage));
     this.submitButton.should('not.be.disabled').click();
 
-    // 5. Модалка закрилась, авто з'явилось у списку
-    cy.get('.modal-content').should('not.exist');
+    // 5. Перехоплений запит: валідація статусу й тіла
+    return cy.wait('@createCar').then(({ request, response }) => {
+      expect(response.statusCode, 'create car status').to.eq(201);
+      expect(response.body.status).to.eq('ok');
 
-    return cy.then(() => {
-      const carName = `${brandText} ${modelText}`;
-      this.carByName(carName).should('be.visible');
-      return cy.wrap(carName);
+      const car = response.body.data;
+      expect(car.id, 'car id').to.be.a('number');
+      expect(car.carBrandId).to.eq(request.body.carBrandId);
+      expect(car.carModelId).to.eq(request.body.carModelId);
+      expect(car.brand).to.eq(brandText);
+      expect(car.model).to.eq(modelText);
+      expect(car.mileage).to.eq(Number(mileage));
+
+      cy.get('.modal-content').should('not.exist');
+      this.carByName(`${brandText} ${modelText}`).should('be.visible');
+
+      return cy.wrap({
+        id: car.id,
+        brandId: car.carBrandId,
+        modelId: car.carModelId,
+        brand: brandText,
+        model: modelText,
+        name: `${brandText} ${modelText}`,
+        mileage: Number(mileage),
+      });
     });
   }
 }
